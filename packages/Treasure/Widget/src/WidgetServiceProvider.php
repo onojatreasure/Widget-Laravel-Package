@@ -15,9 +15,7 @@ class WidgetServiceProvider extends ServiceProvider
     public function boot()
     {
         Blade::directive('widget', function ($expression) {
-            $name = trim($expression, "'");
-
-            return "<?= resolve('App\Http\Widgets\\{$name}')->loadView(); ?>";
+            return "<?= resolve($expression); ?>";
         });
 
         // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'treasure');

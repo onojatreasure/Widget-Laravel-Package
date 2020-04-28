@@ -9,14 +9,11 @@ use Illuminate\Support\Str;
 
 abstract class Widget
 {
-    /**
-     * Load the view with the necessary data.
-     *
-     * @return \Illuminate\View\View
-     */
-    public function loadView()
+
+    public function viewName()
     {
-        return $this->view()->with($this->buildViewData());
+        $name = Str::kebab(class_basename($this));
+        return $name;
     }
 
     /**
@@ -28,8 +25,10 @@ abstract class Widget
     {
         $name = Str::kebab(class_basename($this));
 
-        return view("widgets.{$name}");
+        return view("widgets.".$this->viewName());
     }
+
+    
 
     /**
      * Build the view data.
@@ -37,7 +36,7 @@ abstract class Widget
      * @return array
      * @throws \ReflectionException
      */
-    protected function buildViewData()
+    protected function viewData()
     {
         $viewData = [];
 
@@ -46,11 +45,21 @@ abstract class Widget
         }
 
         foreach ((new ReflectionClass($this))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-            if (! in_array($name = $method->getName(), ['loadView', 'view'])) {
-                $viewData[$name] = $this->$name();
+            if (! in_array($name = $method->getName(), ['view', 'render', '__toString'])) {
+                $viewData[$name] = $method->getClosure($this);
             }
         }
 
         return $viewData;
+    }
+
+    public static function render()
+    {
+        return new static;
+    }
+
+    public function __toString()
+    {
+        return $this->view()->with($this->viewData())->__toString();
     }
 }
